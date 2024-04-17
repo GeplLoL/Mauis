@@ -4,15 +4,15 @@ public partial class MainPage : ContentPage
 {
     string folderPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
     string fileName;
+    string fileContent;
     Label editText;
-
-    private string filename;
 
     protected override void OnAppearing()
     {
         base.OnAppearing();
         UpdateFilesList();
     }
+
     private void UpdateFilesList()
     {
         FilesList.ItemsSource = Directory.GetFiles(folderPath).Select(f => Path.GetFileName(f));
@@ -22,8 +22,8 @@ public partial class MainPage : ContentPage
     private void ToList_Clicked(object sender, EventArgs e)
     {
         fileName = (string)((MenuItem)sender).BindingContext;
-        List<string> list = File.ReadLines(Path.Combine(folderPath, fileName)).ToList();
-        listFailist.ItemsSource = list;
+        fileContent = File.ReadAllText(Path.Combine(folderPath, fileName));
+        listFailist.ItemsSource = File.ReadLines(Path.Combine(folderPath, fileName)).ToList();
     }
 
     private void FilesList_ItemSelected(object sender, SelectedItemChangedEventArgs e)
@@ -33,7 +33,8 @@ public partial class MainPage : ContentPage
             return;
         }
         fileName = e.SelectedItem.ToString();
-        editText.Text = File.ReadAllText(Path.Combine(folderPath, fileName));
+        fileContent = File.ReadAllText(Path.Combine(folderPath, fileName));
+        editText.Text = fileContent;
         FilesList.SelectedItem = null;
     }
 
@@ -43,34 +44,54 @@ public partial class MainPage : ContentPage
         {
             VerticalOptions = LayoutOptions.Center,
         };
-        carousel.ItemsSource = new List<Product>
-        {
-            new Product{Name=filename, Image="dotnet_bot.svg"},
-            new Product{Name="dis2", Image="dotnet_bot.svg"},
-            new Product{Name="dis3", Image="dotnet_bot.svg"},
-        };
+
+        List<string> fileNames = Directory.GetFiles(folderPath).Select(f => Path.GetFileName(f)).ToList();
+
+        carousel.ItemsSource = fileNames.Select(name => new { Name = name, Content = File.ReadAllText(Path.Combine(folderPath, name)) });
+
         carousel.ItemTemplate = new DataTemplate(() =>
         {
             Label header = new Label
             {
-
+                HorizontalOptions = LayoutOptions.Center,
+                VerticalOptions = LayoutOptions.Center,
+                FontSize = Device.GetNamedSize(NamedSize.Large, typeof(Label))
             };
             header.SetBinding(Label.TextProperty, "Name");
-            Image image = new Image { WidthRequest = 200, HeightRequest = 200 };
-            image.SetBinding(Image.SourceProperty, "Image");
-            StackLayout stackLayout = new StackLayout() { Children = { header, image } };
-            Frame frame = new Frame();
-            frame.Content = stackLayout;
+
+            Label contentLabel = new Label
+            {
+                HorizontalOptions = LayoutOptions.Center,
+                VerticalOptions = LayoutOptions.Center,
+                FontSize = Device.GetNamedSize(NamedSize.Medium, typeof(Label))
+            };
+            contentLabel.SetBinding(Label.TextProperty, new Binding("Content"));
+
+            StackLayout stackLayout = new StackLayout()
+            {
+                Children = { header, contentLabel }
+            };
+
+            Frame frame = new Frame
+            {
+                CornerRadius = 10,
+                Margin = 20,
+                WidthRequest = 300,
+                HeightRequest = 400,
+                Content = stackLayout,
+                BackgroundColor = Colors.LightBlue,
+            };
+
             return frame;
         });
-        Content = new StackLayout
-        {
-            Children = { carousel, FilesList, new Label { Text = "Faili sisu loendus:", FontSize = Device.GetNamedSize(NamedSize.Large, typeof(Label)) }, listFailist }
-        };
 
         editText = new Label();
         FilesList = new ListView();
         listFailist = new ListView();
-    }
 
+        Content = new StackLayout
+        {
+            Children = { carousel }
+        };
+    }
 }
