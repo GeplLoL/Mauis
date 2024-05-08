@@ -39,7 +39,6 @@ public partial class Failide_Page : ContentPage
         string fileName= e.SelectedItem.ToString();
         textEditor.Text = File.ReadAllText(Path.Combine(folderPath,fileName));
         fileNameEntry.Text = fileName;
-        FilesList.SelectedItem = null;
     }
 
     private void Delete_Clicked(object sender, EventArgs e)
@@ -48,11 +47,28 @@ public partial class Failide_Page : ContentPage
         File.Delete(Path.Combine(folderPath,fileName));
         UpdateFilesList();
     }
-
     private void ToList_Clicked(object sender, EventArgs e)
     {
         string fileName = (string)((MenuItem)sender).BindingContext;
         List<string> list = File.ReadLines(Path.Combine(folderPath,fileName)).ToList();
         listFailist.ItemsSource = list;
+    }
+    private async void Button_Main (object sender, EventArgs e)
+    {
+        await Navigation.PushAsync(new MainPage());
+    }
+    private void DeleteButton_Clicked(object sender, EventArgs e)
+    {
+        if (FilesList.SelectedItem != null)
+        {
+            string fileName = FilesList.SelectedItem.ToString();
+            string filePath = Path.Combine(folderPath, fileName);
+            File.Delete(filePath);
+            UpdateFilesList();
+        }
+        else
+        {
+            DisplayAlert("Error", "Kustutamiseks ei ole valitud ühtegi faili.", "OK");
+        }
     }
 }
